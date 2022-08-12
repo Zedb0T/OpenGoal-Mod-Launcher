@@ -48,11 +48,12 @@ extraGKCommand = "-proj-path "+os.getenv('APPDATA') + "\\"+MOD_NAME+"\\data "
 PATHTOGK = InstallDir +"\gk.exe "+extraGKCommand+"-boot -fakeiso -debug -v"
 GKCOMMANDLINElist = PATHTOGK.split()
 #store Latest Release and check our local date too.
-LatestRel = datetime.strptime(json.loads(json.dumps(r.json()))[0].get("created_at").replace("T"," ").replace("Z",""),'%Y-%m-%d %H:%M:%S')
+LatestRel = datetime.strptime(json.loads(json.dumps(r.json()))[0].get("published_at").replace("T"," ").replace("Z",""),'%Y-%m-%d %H:%M:%S')
 LatestRelAssetsURL = (json.loads(json.dumps(requests.get(url = json.loads(json.dumps(r.json()))[0].get("assets_url"), params = PARAMS).json())))[0].get("browser_download_url")
 LastWrite = datetime(2020, 5, 17)
 if (exists(InstallDir + "/" + ExecutableName)):
-	LastWrite = datetime.fromtimestamp( pathlib.Path(InstallDir + "/" + ExecutableName).stat().st_mtime)
+	LastWrite = datetime.utcfromtimestamp( pathlib.Path(InstallDir + "/" + ExecutableName).stat().st_mtime)
+	
 
 needUpdate = bool((LastWrite < LatestRel))
 
@@ -76,6 +77,7 @@ if (needUpdate):
 
 	with zipfile.ZipFile(InstallDir + "updateDATA.zip","r") as zip_ref:
 		   zip_ref.extractall(InstallDir)
+
 
 
 
