@@ -24,7 +24,7 @@ URL="https://api.github.com/repos/zedb0t/OpenGoal-CheckpointRandomizer/releases"
 EXTRACT_ON_UPDATE="true"            
 FILE_DATE_TO_CHECK="gk.exe"
 UPDATE_FILE_EXTENTION=".zip"
-MOD_NAME="OpenGOAL-checkpointRandomizer"
+MOD_NAME="OpenGOAL-lolYouforgottorenamethemod"
 
 
 # Folder where script is placed, It looks in this for the Exectuable
