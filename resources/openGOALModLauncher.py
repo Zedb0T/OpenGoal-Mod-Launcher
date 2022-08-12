@@ -24,7 +24,7 @@ URL="https://api.github.com/repos/zedb0t/OpenGoal-CheckpointRandomizer/releases"
 EXTRACT_ON_UPDATE="true"            
 FILE_DATE_TO_CHECK="gk.exe"
 UPDATE_FILE_EXTENTION=".zip"
-MOD_NAME="OpenGOAL-lolYouforgottorenamethemod"
+MOD_NAME="OpenGOAL-checkpointRandomizer"
 
 
 # Folder where script is placed, It looks in this for the Exectuable
@@ -43,9 +43,9 @@ FileIdent = "" # If we ever get to multiple .zip files in a release, include oth
 #Github API Call
 PARAMS = {'address':"yolo"} 
 r = requests.get(url = URL, params = PARAMS)  
-InstallDir = os.getenv('APPDATA') + "\\"+ MOD_NAME
-extraGKCommand = "-proj-path "+os.getenv('APPDATA') + "\\"+MOD_NAME+"\\data "
-PATHTOGK = InstallDir +"\gk.exe "+extraGKCommand+"-boot -fakeiso -debug -v"
+InstallDir = os.getenv('APPDATA') + "\\OpenGOAL-"+ MOD_NAME
+extraGKCommand = "-proj-path "+os.getenv('APPDATA') + "\\OpenGOAL-"+MOD_NAME+"\\data "
+PATHTOGK = InstallDir +"\gk.exe "+extraGKCommand+"-boot -fakeiso -v"
 GKCOMMANDLINElist = PATHTOGK.split()
 #store Latest Release and check our local date too.
 LatestRel = datetime.strptime(json.loads(json.dumps(r.json()))[0].get("published_at").replace("T"," ").replace("Z",""),'%Y-%m-%d %H:%M:%S')
@@ -79,18 +79,11 @@ if (needUpdate):
 		   zip_ref.extractall(InstallDir)
 
 
-
-
-	
-
-
-
 #extract update
 
 #delete the update archive
 
 #if extractOnUpdate is True, check their ISO_DATA folder
-
 
 	if (exists("data\iso_data\jak1\Z6TAIL.DUP")):
 		iso_path = "data\iso_data\jak1"
@@ -105,11 +98,14 @@ if (needUpdate):
 
 
 #if ISO_DATA has content, store this path to pass to the extractor
-	print("\""+InstallDir +"\extractor.exe""\""""" -f """ + "\""""+ iso_path+"\"""")
+	
 	subprocess.Popen("\""+InstallDir +"\extractor.exe""\""""" -f """ + "\""""+ iso_path+"\"""")
 
 
 #run extractor
+
+
+#if we dont need to update, then close any open instances of the game and just launch it
 if (not(needUpdate)):
 	#Close Gk and goalc if they were open.
 	print("If it errors below that is O.K.")
