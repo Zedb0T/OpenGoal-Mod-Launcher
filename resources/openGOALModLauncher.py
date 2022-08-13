@@ -64,6 +64,7 @@ def try_remove_dir(dir):
 PARAMS = {'address':"yolo"} 
 r = requests.get(url = URL, params = PARAMS)  
 InstallDir = os.getenv('APPDATA') + "\\OpenGOAL-"+ MOD_NAME
+AppdataPATH = os.getenv('APPDATA')
 extraGKCommand = "-proj-path "+os.getenv('APPDATA') + "\\OpenGOAL-"+MOD_NAME+"\\data "
 PATHTOGK = InstallDir +"\gk.exe "+extraGKCommand+"-boot -fakeiso -v"
 GKCOMMANDLINElist = PATHTOGK.split()
@@ -126,8 +127,8 @@ if (needUpdate):
 	#if extractOnUpdate is True, check their ISO_DATA folder
 
 	#if ISO_DATA has content, store this path to pass to the extractor
-	if (exists(InstallDir + "\data\iso_data\jak1\Z6TAIL.DUP")):
-		iso_path = InstallDir + "\data\iso_data\jak1"
+	if (exists(AppdataPATH + "\OpenGOAL-Launcher\data\iso_data\jak1\Z6TAIL.DUP")):
+		iso_path = AppdataPATH + "\OpenGOAL-Launcher\data\iso_data\jak1"
 	else:
 		#if ISO_DATA is empty, prompt for their ISO and store its path.
 		root = tk.Tk()
