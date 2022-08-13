@@ -90,7 +90,12 @@ if (needUpdate):
 	try_kill_process("goalc.exe")
 
 	#download update from github
+	# Create a new directory because it does not exist 
 	print("Downloading update")
+	if not os.path.exists(InstallDir):
+	  os.makedirs(InstallDir)
+	  print("The new directory is created!")
+	  
 	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "/updateDATA.zip")
 	print("Done downloading")
 	
@@ -126,6 +131,9 @@ if (needUpdate):
 	else:
 		#if ISO_DATA is empty, prompt for their ISO and store its path.
 		root = tk.Tk()
+		print("Please select your iso.")
+		root.title("Select ISO")
+		root.geometry('1x1')
 		iso_path = filedialog.askopenfilename()
 		root.destroy()
 
