@@ -100,9 +100,6 @@ if (needUpdate):
 	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "/updateDATA.zip")
 	print("Done downloading")
 	
-	#backup iso_data to avoid re-extraction
-	if exists(InstallDir + "/data/iso_data"):
-		shutil.move(InstallDir + "/data/iso_data", InstallDir + "/backup/iso_data")
 	
 	#delete any previous installation
 	print("Removing previous installation " + InstallDir)
@@ -111,10 +108,6 @@ if (needUpdate):
 	try_remove_file(InstallDir + "/goalc.exe")
 	try_remove_file(InstallDir + "/extractor.exe")
 
-	#restore backed up iso_data to avoid re-extraction
-	if exists(InstallDir + "/backup/iso_data"):
-		shutil.move(InstallDir + "/backup/iso_data", InstallDir + "/data/iso_data")
-		try_remove_dir(InstallDir + "/backup")
 	
 	#extract update
 	print("Extracting update")
