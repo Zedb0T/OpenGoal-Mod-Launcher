@@ -120,8 +120,9 @@ if (needUpdate):
 		root.geometry('230x1')
 		iso_path = filedialog.askopenfilename()
 		root.destroy()
-	if ((not pathlib.Path(iso_path).suffix == '.iso')):
-		1/0
+		if (pathlib.Path(iso_path).is_file):
+			if ((not pathlib.Path(iso_path).suffix == '.iso')):
+				1/0
 	#extract update
 	print("Extracting update")
 	with zipfile.ZipFile(InstallDir + "/updateDATA.zip","r") as zip_ref:
