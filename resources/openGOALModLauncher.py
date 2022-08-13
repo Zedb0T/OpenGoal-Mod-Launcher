@@ -17,7 +17,7 @@ import pathlib
 from datetime import datetime
 import urllib.request
 import zipfile
-
+import shutil
 
 #SET THESE
 URL="https://api.github.com/repos/zedb0t/OpenGoal-CheckpointRandomizer/releases"
@@ -38,6 +38,26 @@ ExecutableName = str(FILE_DATE_TO_CHECK) # Executable we're checking the 'modifi
 FileExt = str(UPDATE_FILE_EXTENTION) # content_type of the .deb release is also "application\zip", so rely on file ext
 FileIdent = "" # If we ever get to multiple .zip files in a release, include other identifying information from the name (e.g. "windows-x64")
 
+def process_exists(process_name):
+    call = 'TASKLIST', '/FI', 'imagename eq %s' % process_name
+    # use buildin check_output right away
+    output = subprocess.check_output(call).decode()
+    # check in last line for process name
+    last_line = output.strip().split('\r\n')[-1]
+    # because Fail message could be translated
+    return last_line.lower().startswith(process_name.lower())
+
+def try_kill_process(process_name):
+	if process_exists(process_name):
+		os.system("taskkill /f /im " + process_name)
+
+def try_remove_file(file):
+	if exists(file):
+		os.remove(file)
+
+def try_remove_dir(dir):
+	if exists(dir):
+		shutil.rmtree(dir)
 
 #start of update check method
 #Github API Call
@@ -63,61 +83,62 @@ print("Do we need to update? ")
 print(needUpdate)
 
 if (needUpdate):
-#start the actual update method if needUpdate is true
+	#start the actual update method if needUpdate is true
 
-#close current files so we can update them
+	#Close Gk and goalc if they were open.
+	try_kill_process("gk.exe")
+	try_kill_process("goalc.exe")
 
-#download update from github
+	#download update from github
 	print("Downloading update")
-	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "updateDATA.zip")
+	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "/updateDATA.zip")
 	print("Done downloading")
 	
-	print("Extracting update")
+	#backup iso_data to avoid re-extraction
+	if exists(InstallDir + "/data/iso_data"):
+		shutil.move(InstallDir + "/data/iso_data", InstallDir + "/backup/iso_data")
 	
+	#delete any previous installation
+	print("Removing previous installation " + InstallDir)
+	try_remove_dir(InstallDir + "/data")
+	try_remove_file(InstallDir + "/gk.exe")
+	try_remove_file(InstallDir + "/goalc.exe")
+	try_remove_file(InstallDir + "/extractor.exe")
 
-	with zipfile.ZipFile(InstallDir + "updateDATA.zip","r") as zip_ref:
-		   zip_ref.extractall(InstallDir)
+	#restore backed up iso_data to avoid re-extraction
+	if exists(InstallDir + "/backup/iso_data"):
+		shutil.move(InstallDir + "/backup/iso_data", InstallDir + "/data/iso_data")
+		try_remove_dir(InstallDir + "/backup")
+	
+	#extract update
+	print("Extracting update")
+	with zipfile.ZipFile(InstallDir + "/updateDATA.zip","r") as zip_ref:
+		zip_ref.extractall(InstallDir)
 
+	#delete the update archive
+	try_remove_file(InstallDir + "/updateDATA.zip")
 
-#extract update
+	#if extractOnUpdate is True, check their ISO_DATA folder
 
-#delete the update archive
-
-#if extractOnUpdate is True, check their ISO_DATA folder
-
-	if (exists("data\iso_data\jak1\Z6TAIL.DUP")):
-		iso_path = "data\iso_data\jak1"
-
-
-
-#if ISO_DATA is empty, prompt for their ISO and store its path.
-	if (not (exists("data\iso_data\jak1\Z6TAIL.DUP"))):
+	#if ISO_DATA has content, store this path to pass to the extractor
+	if (exists(InstallDir + "\data\iso_data\jak1\Z6TAIL.DUP")):
+		iso_path = InstallDir + "\data\iso_data\jak1"
+	else:
+		#if ISO_DATA is empty, prompt for their ISO and store its path.
 		root = tk.Tk()
 		iso_path = filedialog.askopenfilename()
 		root.destroy()
 
-
-#if ISO_DATA has content, store this path to pass to the extractor
-	
+	print("Running extractor.exe with ISO: " + iso_path)
 	subprocess.Popen("\""+InstallDir +"\extractor.exe""\""""" -f """ + "\""""+ iso_path+"\"""")
 
+else:
+	#if we dont need to update, then close any open instances of the game and just launch it
 
-#run extractor
-
-
-#if we dont need to update, then close any open instances of the game and just launch it
-if (not(needUpdate)):
 	#Close Gk and goalc if they were open.
-	print("If it errors below that is O.K.")
-	subprocess.Popen("""taskkill /F /IM gk.exe""",shell=True)
-	subprocess.Popen("""taskkill /F /IM goalc.exe""",shell=True)
+	try_kill_process("gk.exe")
+	try_kill_process("goalc.exe")
+
 	time.sleep(1)
 	print(GKCOMMANDLINElist)
 	subprocess.Popen(GKCOMMANDLINElist)
-
-
-
-
-
-
-	

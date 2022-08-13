@@ -14,4 +14,12 @@ pip install ahk
 SET /P AREYOUSURE=Install asyncio (Y/[N])? 
 IF /I "%AREYOUSURE%" NEQ "Y" GOTO install
 pip install asyncio
+:requests
+SET /P AREYOUSURE=Install requests (Y/[N])? 
+IF /I "%AREYOUSURE%" NEQ "Y" GOTO install
+pip install requests
+:Pillow
+SET /P AREYOUSURE=Install Pillow (Y/[N])? 
+IF /I "%AREYOUSURE%" NEQ "Y" GOTO install
+pip install Pillow
 :install
