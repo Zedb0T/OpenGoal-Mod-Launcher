@@ -117,7 +117,7 @@ if (needUpdate):
 		root = tk.Tk()
 		print("Please select your iso.")
 		root.title("Select ISO")
-		root.geometry('100x1')
+		root.geometry('230x1')
 		iso_path = filedialog.askopenfilename()
 		root.destroy()
 	if ((not pathlib.Path(iso_path).suffix == '.iso')):
