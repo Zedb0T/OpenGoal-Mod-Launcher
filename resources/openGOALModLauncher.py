@@ -62,11 +62,16 @@ def try_remove_dir(dir):
 #start of update check method
 #Github API Call
 PARAMS = {'address':"yolo"} 
-r = requests.get(url = URL, params = PARAMS)  
+r = requests.get(url = URL, params = PARAMS)
+
+#paths  
 InstallDir = os.getenv('APPDATA') + "\\OpenGOAL-"+ MOD_NAME
+AppdataPATH = os.getenv('APPDATA')
 extraGKCommand = "-proj-path "+os.getenv('APPDATA') + "\\OpenGOAL-"+MOD_NAME+"\\data "
 PATHTOGK = InstallDir +"\gk.exe "+extraGKCommand+"-boot -fakeiso -v"
+UniversalIsoPath = AppdataPATH + "\OpenGOAL\jak1\mods\data\iso_data"
 GKCOMMANDLINElist = PATHTOGK.split()
+
 #store Latest Release and check our local date too.
 LatestRel = datetime.strptime(json.loads(json.dumps(r.json()))[0].get("published_at").replace("T"," ").replace("Z",""),'%Y-%m-%d %H:%M:%S')
 LatestRelAssetsURL = (json.loads(json.dumps(requests.get(url = json.loads(json.dumps(r.json()))[0].get("assets_url"), params = PARAMS).json())))[0].get("browser_download_url")
@@ -79,24 +84,25 @@ needUpdate = bool((LastWrite < LatestRel))
 
 print("Currently installed version created on: " + LastWrite.strftime('%Y-%m-%d %H:%M:%S'))
 print("Newest version created on: " + LatestRel.strftime('%Y-%m-%d %H:%M:%S'))
-print("Do we need to update? ")
-print(needUpdate)
 
-if (needUpdate):
+
+if (needUpdate or (not (exists(UniversalIsoPath +r"\jak1\buildinfo.json")))):
 	#start the actual update method if needUpdate is true
-
+	print(Starting Update...)
 	#Close Gk and goalc if they were open.
 	try_kill_process("gk.exe")
 	try_kill_process("goalc.exe")
 
 	#download update from github
+	# Create a new directory because it does not exist 
 	print("Downloading update")
+	if not os.path.exists(InstallDir):
+	  os.makedirs(InstallDir)
+
+	  
 	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "/updateDATA.zip")
 	print("Done downloading")
 	
-	#backup iso_data to avoid re-extraction
-	if exists(InstallDir + "/data/iso_data"):
-		shutil.move(InstallDir + "/data/iso_data", InstallDir + "/backup/iso_data")
 	
 	#delete any previous installation
 	print("Removing previous installation " + InstallDir)
@@ -105,11 +111,20 @@ if (needUpdate):
 	try_remove_file(InstallDir + "/goalc.exe")
 	try_remove_file(InstallDir + "/extractor.exe")
 
-	#restore backed up iso_data to avoid re-extraction
-	if exists(InstallDir + "/backup/iso_data"):
-		shutil.move(InstallDir + "/backup/iso_data", InstallDir + "/data/iso_data")
-		try_remove_dir(InstallDir + "/backup")
-	
+	#if ISO_DATA has content, store this path to pass to the extractor
+	if (exists(UniversalIsoPath +"\jak1\Z6TAIL.DUP")):
+		iso_path = UniversalIsoPath + "\jak1"
+	else:
+		#if ISO_DATA is empty, prompt for their ISO and store its path.
+		root = tk.Tk()
+		print("Please select your iso.")
+		root.title("Select ISO")
+		root.geometry('230x1')
+		iso_path = filedialog.askopenfilename()
+		root.destroy()
+		if (pathlib.Path(iso_path).is_file):
+			if ((not pathlib.Path(iso_path).suffix == '.iso')):
+				1/0
 	#extract update
 	print("Extracting update")
 	with zipfile.ZipFile(InstallDir + "/updateDATA.zip","r") as zip_ref:
@@ -120,17 +135,20 @@ if (needUpdate):
 
 	#if extractOnUpdate is True, check their ISO_DATA folder
 
-	#if ISO_DATA has content, store this path to pass to the extractor
-	if (exists(InstallDir + "\data\iso_data\jak1\Z6TAIL.DUP")):
-		iso_path = InstallDir + "\data\iso_data\jak1"
-	else:
-		#if ISO_DATA is empty, prompt for their ISO and store its path.
-		root = tk.Tk()
-		iso_path = filedialog.askopenfilename()
-		root.destroy()
+
 
 	print("Running extractor.exe with ISO: " + iso_path)
 	subprocess.Popen("\""+InstallDir +"\extractor.exe""\""""" -f """ + "\""""+ iso_path+"\"""")
+	
+	
+	#move the extrated contents to the universal launchers directory for next time.
+	if (not (exists(( UniversalIsoPath + r"\jak1\buildinfo.json")))):
+		while (process_exists("extractor.exe")):
+			time.sleep(1)
+	if not (exists(( UniversalIsoPath))):
+		#os.makedirs(AppdataPATH + "\OpenGOAL-Launcher\data\iso_data")
+		print("The new directory is created!")
+		shutil.move(InstallDir + "/data/iso_data", "" + UniversalIsoPath +"")
 
 else:
 	#if we dont need to update, then close any open instances of the game and just launch it
