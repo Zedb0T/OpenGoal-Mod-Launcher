@@ -84,12 +84,11 @@ needUpdate = bool((LastWrite < LatestRel))
 
 print("Currently installed version created on: " + LastWrite.strftime('%Y-%m-%d %H:%M:%S'))
 print("Newest version created on: " + LatestRel.strftime('%Y-%m-%d %H:%M:%S'))
-print("Do we need to update? ")
-print(needUpdate)
 
-if (needUpdate):
+
+if (needUpdate or (not (exists(UniversalIsoPath +r"\jak1\buildinfo.json")))):
 	#start the actual update method if needUpdate is true
-
+	print(Starting Update...)
 	#Close Gk and goalc if they were open.
 	try_kill_process("gk.exe")
 	try_kill_process("goalc.exe")
@@ -143,7 +142,7 @@ if (needUpdate):
 	
 	
 	#move the extrated contents to the universal launchers directory for next time.
-	if (not (exists(( UniversalIsoPath + "\jak1\Z6TAIL.DUP")))):
+	if (not (exists(( UniversalIsoPath + r"\jak1\buildinfo.json")))):
 		while (process_exists("extractor.exe")):
 			time.sleep(1)
 	if not (exists(( UniversalIsoPath))):
