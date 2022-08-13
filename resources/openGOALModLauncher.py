@@ -67,6 +67,7 @@ InstallDir = os.getenv('APPDATA') + "\\OpenGOAL-"+ MOD_NAME
 AppdataPATH = os.getenv('APPDATA')
 extraGKCommand = "-proj-path "+os.getenv('APPDATA') + "\\OpenGOAL-"+MOD_NAME+"\\data "
 PATHTOGK = InstallDir +"\gk.exe "+extraGKCommand+"-boot -fakeiso -v"
+UniversalIsoPath = AppdataPATH + "\OpenGOAL\jak1\mods\data\iso_data"
 GKCOMMANDLINElist = PATHTOGK.split()
 #store Latest Release and check our local date too.
 LatestRel = datetime.strptime(json.loads(json.dumps(r.json()))[0].get("published_at").replace("T"," ").replace("Z",""),'%Y-%m-%d %H:%M:%S')
@@ -95,7 +96,7 @@ if (needUpdate):
 	print("Downloading update")
 	if not os.path.exists(InstallDir):
 	  os.makedirs(InstallDir)
-	  print("The new directory is created!")
+
 	  
 	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "/updateDATA.zip")
 	print("Done downloading")
@@ -108,7 +109,19 @@ if (needUpdate):
 	try_remove_file(InstallDir + "/goalc.exe")
 	try_remove_file(InstallDir + "/extractor.exe")
 
-	
+	#if ISO_DATA has content, store this path to pass to the extractor
+	if (exists(UniversalIsoPath +"\jak1\Z6TAIL.DUP")):
+		iso_path = UniversalIsoPath + "\jak1"
+	else:
+		#if ISO_DATA is empty, prompt for their ISO and store its path.
+		root = tk.Tk()
+		print("Please select your iso.")
+		root.title("Select ISO")
+		root.geometry('100x1')
+		iso_path = filedialog.askopenfilename()
+		root.destroy()
+	if ((not pathlib.Path(iso_path).suffix == '.iso')):
+		1/0
 	#extract update
 	print("Extracting update")
 	with zipfile.ZipFile(InstallDir + "/updateDATA.zip","r") as zip_ref:
@@ -119,20 +132,20 @@ if (needUpdate):
 
 	#if extractOnUpdate is True, check their ISO_DATA folder
 
-	#if ISO_DATA has content, store this path to pass to the extractor
-	if (exists(AppdataPATH + "\OpenGOAL-Launcher\data\iso_data\jak1\Z6TAIL.DUP")):
-		iso_path = AppdataPATH + "\OpenGOAL-Launcher\data\iso_data\jak1"
-	else:
-		#if ISO_DATA is empty, prompt for their ISO and store its path.
-		root = tk.Tk()
-		print("Please select your iso.")
-		root.title("Select ISO")
-		root.geometry('1x1')
-		iso_path = filedialog.askopenfilename()
-		root.destroy()
+
 
 	print("Running extractor.exe with ISO: " + iso_path)
 	subprocess.Popen("\""+InstallDir +"\extractor.exe""\""""" -f """ + "\""""+ iso_path+"\"""")
+	
+	
+	#move the extrated contents to the universal launchers directory for next time.
+	if (not (exists(( UniversalIsoPath + "\jak1\Z6TAIL.DUP")))):
+		while (process_exists("extractor.exe")):
+			time.sleep(1)
+	if not (exists(( UniversalIsoPath))):
+		#os.makedirs(AppdataPATH + "\OpenGOAL-Launcher\data\iso_data")
+		print("The new directory is created!")
+		shutil.move(InstallDir + "/data/iso_data", "" + UniversalIsoPath +"")
 
 else:
 	#if we dont need to update, then close any open instances of the game and just launch it
