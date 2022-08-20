@@ -18,25 +18,48 @@ from datetime import datetime
 import urllib.request
 import zipfile
 import shutil
+import progressbar
+
+# 
+
+
+
 
 #SET THESE
-URL="https://api.github.com/repos/zedb0t/OpenGoal-CheckpointRandomizer/releases"
+URL="https://api.github.com/repos/himham-jak/Jak1-but-Microtransactions/releases"
 EXTRACT_ON_UPDATE="true"            
 FILE_DATE_TO_CHECK="gk.exe"
 UPDATE_FILE_EXTENTION=".zip"
-MOD_NAME="REMEBERTTOCHANGETHIS"
+MOD_NAME="WithMicrotransactionsreleases"
 
 
 # Folder where script is placed, It looks in this for the Exectuable
 if getattr(sys, 'frozen', False):
-    InstallDir = os.path.dirname(os.path.realpath(sys.executable))
+    LauncherDir = os.path.dirname(os.path.realpath(sys.executable))
 elif __file__:
-    InstallDir = os.path.dirname(__file__)
+    LauncherDir = os.path.dirname(__file__)
 
 extractOnUpdate = bool(str(EXTRACT_ON_UPDATE).replace("t","T").replace("f", "F"))
 ExecutableName = str(FILE_DATE_TO_CHECK) # Executable we're checking the 'modified' time of
 FileExt = str(UPDATE_FILE_EXTENTION) # content_type of the .deb release is also "application\zip", so rely on file ext
 FileIdent = "" # If we ever get to multiple .zip files in a release, include other identifying information from the name (e.g. "windows-x64")
+
+
+pbar = None
+
+
+def show_progress(block_num, block_size, total_size):
+    global pbar
+    if pbar is None:
+        pbar = progressbar.ProgressBar(maxval=total_size)
+        pbar.start()
+
+    downloaded = block_num * block_size
+    if downloaded < total_size:
+        pbar.update(downloaded)
+    else:
+        pbar.finish()
+        pbar = None
 
 def process_exists(process_name):
     call = 'TASKLIST', '/FI', 'imagename eq %s' % process_name
@@ -72,23 +95,27 @@ PATHTOGK = InstallDir +"\gk.exe "+extraGKCommand+"-boot -fakeiso -v"
 UniversalIsoPath = AppdataPATH + "\OpenGOAL\jak1\mods\data\iso_data"
 GKCOMMANDLINElist = PATHTOGK.split()
 
+
 #store Latest Release and check our local date too.
 LatestRel = datetime.strptime(json.loads(json.dumps(r.json()))[0].get("published_at").replace("T"," ").replace("Z",""),'%Y-%m-%d %H:%M:%S')
 LatestRelAssetsURL = (json.loads(json.dumps(requests.get(url = json.loads(json.dumps(r.json()))[0].get("assets_url"), params = PARAMS).json())))[0].get("browser_download_url")
 LastWrite = datetime(2020, 5, 17)
 if (exists(InstallDir + "/" + ExecutableName)):
 	LastWrite = datetime.utcfromtimestamp( pathlib.Path(InstallDir + "/" + ExecutableName).stat().st_mtime)
-	
 
-needUpdate = bool((LastWrite < LatestRel))
+#update checks
+NotExtracted = bool(not (exists(UniversalIsoPath +r"\jak1\Z6TAIL.DUP")))
+NotCompiled = bool(not (exists (InstallDir + r"\data\out\jak1\fr3\GAME.fr3")))
+needUpdate = bool((LastWrite < LatestRel) or (NotExtracted) or NotCompiled)
 
 print("Currently installed version created on: " + LastWrite.strftime('%Y-%m-%d %H:%M:%S'))
 print("Newest version created on: " + LatestRel.strftime('%Y-%m-%d %H:%M:%S'))
 
 
-if (needUpdate or (not (exists(UniversalIsoPath +r"\jak1\buildinfo.json")))):
+if (needUpdate):
+	
 	#start the actual update method if needUpdate is true
-	print(Starting Update...)
+	print("Starting Update...")
 	#Close Gk and goalc if they were open.
 	try_kill_process("gk.exe")
 	try_kill_process("goalc.exe")
@@ -100,7 +127,7 @@ if (needUpdate or (not (exists(UniversalIsoPath +r"\jak1\buildinfo.json")))):
 	  os.makedirs(InstallDir)
 
 	  
-	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "/updateDATA.zip")
+	urllib.request.urlretrieve(LatestRelAssetsURL, InstallDir + "/updateDATA.zip", show_progress)
 	print("Done downloading")
 	
 	
@@ -112,7 +139,7 @@ if (needUpdate or (not (exists(UniversalIsoPath +r"\jak1\buildinfo.json")))):
 	try_remove_file(InstallDir + "/extractor.exe")
 
 	#if ISO_DATA has content, store this path to pass to the extractor
-	if (exists(UniversalIsoPath +"\jak1\Z6TAIL.DUP")):
+	if (exists(UniversalIsoPath +r"\jak1\Z6TAIL.DUP")):
 		iso_path = UniversalIsoPath + "\jak1"
 	else:
 		#if ISO_DATA is empty, prompt for their ISO and store its path.
@@ -123,7 +150,7 @@ if (needUpdate or (not (exists(UniversalIsoPath +r"\jak1\buildinfo.json")))):
 		iso_path = filedialog.askopenfilename()
 		root.destroy()
 		if (pathlib.Path(iso_path).is_file):
-			if ((not pathlib.Path(iso_path).suffix == '.iso')):
+			if ((not (pathlib.Path(iso_path).suffix).lower() == '.iso')):
 				1/0
 	#extract update
 	print("Extracting update")
@@ -142,13 +169,15 @@ if (needUpdate or (not (exists(UniversalIsoPath +r"\jak1\buildinfo.json")))):
 	
 	
 	#move the extrated contents to the universal launchers directory for next time.
-	if (not (exists(( UniversalIsoPath + r"\jak1\buildinfo.json")))):
+	if (not (exists(( UniversalIsoPath + r"\jak1\Z6TAIL.DUP")))):
 		while (process_exists("extractor.exe")):
 			time.sleep(1)
-	if not (exists(( UniversalIsoPath))):
+	if not (exists(( UniversalIsoPath + r"\jak1\Z6TAIL.DUP"))):
 		#os.makedirs(AppdataPATH + "\OpenGOAL-Launcher\data\iso_data")
 		print("The new directory is created!")
 		shutil.move(InstallDir + "/data/iso_data", "" + UniversalIsoPath +"")
+		#try_remove_dir(InstallDir + "/data/iso_data")
+		#os.symlink("" + UniversalIsoPath +"", InstallDir + "/data/iso_data")
 
 else:
 	#if we dont need to update, then close any open instances of the game and just launch it
